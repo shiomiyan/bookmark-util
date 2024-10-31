@@ -17,10 +17,9 @@ export interface Env {
 }
 
 export default {
-	async fetch(request, env): Promise<Response> {
-		// Allow only POST requests
+	async fetch(request: Request, env: Env): Promise<Response> {
 		if (request.method !== "POST") {
-			return new Response(null, { status: 405 });
+			return new Response("Method not allowed.", { status: 405 });
 		}
 
 		const inoreader = await request.json<InoreaderData>();
@@ -29,6 +28,7 @@ export default {
 			return new Response("Forbidden :(", { status: 403 });
 		}
 
+		// Mutation query for Omnivore GraphQL API
 		const query = `
 			mutation SaveUrl($input: SaveUrlInput!) {
 				saveUrl(input: $input) {
@@ -38,6 +38,7 @@ export default {
 			}
 			`;
 
+		// Omnivore GraphQL API variables
 		const clientRequestId = uuidv4();
 		const variables = {
 			input: {
@@ -47,24 +48,25 @@ export default {
 			},
 		};
 
-		const data = JSON.stringify({ query, variables });
-
 		const headers = {
 			"authorization": env.OMNIVORE_API_KEY,
 			"content-type": "application/json",
 		};
 
-		const response = await fetch(
+		const omnivoreApiResponse = await fetch(
 			"https://api-prod.omnivore.app/api/graphql",
 			{
 				method: "POST",
 				headers,
-				body: data,
+				body: JSON.stringify({ query, variables }),
 			},
 		);
 
-		return new Response(JSON.stringify(await response.json()), {
-			status: response.status,
+		return new Response(JSON.stringify(await omnivoreApiResponse.json()), {
+			status: omnivoreApiResponse.status,
+			headers: {
+				"content-type": "application/json",
+			},
 		});
 	},
 } satisfies ExportedHandler<Env>;
