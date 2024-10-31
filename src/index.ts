@@ -1,9 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 
-export interface InoreaderData {
-	rule: {
-		name: string;
-	};
+interface InoreaderData {
 	items: {
 		canonical: {
 			href: string;
@@ -11,8 +8,9 @@ export interface InoreaderData {
 	}[];
 }
 
-export interface Env {
+interface Env {
 	INOREADER_RULE_NAME: string;
+	INOREADER_USER_ID: string;
 	OMNIVORE_API_KEY: string;
 }
 
@@ -22,9 +20,13 @@ export default {
 			return new Response("Method not allowed.", { status: 405 });
 		}
 
-		const inoreader = await request.json<InoreaderData>();
-
-		if (inoreader.rule.name !== env.INOREADER_RULE_NAME) {
+		// Validate Inoreader user id and rule name
+		if (
+			request.headers.get("x-inoreader-user-id") !==
+				env.INOREADER_USER_ID ||
+			request.headers.get("x-inoreader-rule-name") !==
+				env.INOREADER_RULE_NAME
+		) {
 			return new Response("Forbidden :(", { status: 403 });
 		}
 
@@ -40,6 +42,7 @@ export default {
 
 		// Omnivore GraphQL API variables
 		const clientRequestId = uuidv4();
+		const inoreader = await request.json<InoreaderData>();
 		const variables = {
 			input: {
 				clientRequestId,
