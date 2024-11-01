@@ -22,10 +22,8 @@ export default {
 
 		// Validate Inoreader user id and rule name
 		if (
-			request.headers.get("x-inoreader-user-id") !==
-				env.INOREADER_USER_ID ||
-			request.headers.get("x-inoreader-rule-name") !==
-				env.INOREADER_RULE_NAME
+			request.headers.get("x-inoreader-user-id") !== env.INOREADER_USER_ID ||
+			request.headers.get("x-inoreader-rule-name") !== env.INOREADER_RULE_NAME
 		) {
 			return new Response("Forbidden :(", { status: 403 });
 		}
@@ -52,7 +50,7 @@ export default {
 		};
 
 		const headers = {
-			"authorization": env.OMNIVORE_API_KEY,
+			authorization: env.OMNIVORE_API_KEY,
 			"content-type": "application/json",
 		};
 
