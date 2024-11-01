@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
-
 interface InoreaderData {
 	items: {
 		canonical: {
@@ -11,7 +9,7 @@ interface InoreaderData {
 interface Env {
 	INOREADER_RULE_NAME: string;
 	INOREADER_USER_ID: string;
-	OMNIVORE_API_KEY: string;
+	RAINDROP_TEST_TOKEN: string;
 }
 
 export default {
@@ -28,38 +26,20 @@ export default {
 			return new Response("Forbidden :(", { status: 403 });
 		}
 
-		// Mutation query for Omnivore GraphQL API
-		const query = `
-			mutation SaveUrl($input: SaveUrlInput!) {
-				saveUrl(input: $input) {
-					... on SaveSuccess { url clientRequestId }
-					... on SaveError { errorCodes message }
-				}
-			}
-			`;
-
-		// Omnivore GraphQL API variables
-		const clientRequestId = uuidv4();
 		const inoreader = await request.json<InoreaderData>();
-		const variables = {
-			input: {
-				clientRequestId,
-				source: "api",
-				url: inoreader.items[0].canonical[0].href,
-			},
-		};
+		const url = inoreader.items[0].canonical[0].href;
 
 		const headers = {
-			authorization: env.OMNIVORE_API_KEY,
+			authorization: `Bearer ${env.RAINDROP_TEST_TOKEN}`,
 			"content-type": "application/json",
 		};
 
 		const omnivoreApiResponse = await fetch(
-			"https://api-prod.omnivore.app/api/graphql",
+			"https://api.raindrop.io/rest/v1/raindrop",
 			{
 				method: "POST",
 				headers,
-				body: JSON.stringify({ query, variables }),
+				body: JSON.stringify({ link: url }),
 			},
 		);
 
