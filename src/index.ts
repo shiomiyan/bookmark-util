@@ -1,6 +1,6 @@
 interface InoreaderData {
-	title: string;
 	items: {
+		title: string;
 		canonical: {
 			href: string;
 		}[];
@@ -28,7 +28,7 @@ export default {
 		}
 
 		const inoreader = await request.json<InoreaderData>();
-		const title = inoreader.title;
+		const title = inoreader.items[0].title;
 		const url = inoreader.items[0].canonical[0].href;
 
 		const headers = {
