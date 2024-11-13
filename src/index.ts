@@ -1,4 +1,5 @@
 interface InoreaderData {
+	title: string;
 	items: {
 		canonical: {
 			href: string;
@@ -27,6 +28,7 @@ export default {
 		}
 
 		const inoreader = await request.json<InoreaderData>();
+		const title = inoreader.title;
 		const url = inoreader.items[0].canonical[0].href;
 
 		const headers = {
@@ -39,7 +41,7 @@ export default {
 			{
 				method: "POST",
 				headers,
-				body: JSON.stringify({ link: url }),
+				body: JSON.stringify({ title, link: url }),
 			},
 		);
 
