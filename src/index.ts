@@ -40,21 +40,18 @@ export default {
 		// TODO: 現状「まとめる」タグの付いたコンテンツしか取り込めない
 		// 「あとで読む」も同期するなど、将来的には汎用性を上げたい
 
-		// Fetch Raindrop collection for "まとめる"
-		const collection = (await fetch(
-			"https://api.raindrop.io/rest/v1/collection/50015228",
-			{
-				method: "GET",
-				headers,
-			},
-		)).json();
-
+		// Raindrop collection ID for "まとめる"
+		const collectionId = "50015228";
 		const createRaindropResponse = await fetch(
 			"https://api.raindrop.io/rest/v1/raindrop",
 			{
 				method: "POST",
 				headers,
-				body: JSON.stringify({ title, link: url, collection }),
+				body: JSON.stringify({
+					title,
+					link: url,
+					collection: { id: collectionId },
+				}),
 			},
 		);
 
