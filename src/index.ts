@@ -41,7 +41,7 @@ export default {
 		// 「あとで読む」も同期するなど、将来的には汎用性を上げたい
 
 		// Raindrop collection ID for "まとめる"
-		const collectionId = "50015228";
+		const collectionId = 50015228;
 		const createRaindropResponse = await fetch(
 			"https://api.raindrop.io/rest/v1/raindrop",
 			{
@@ -50,7 +50,7 @@ export default {
 				body: JSON.stringify({
 					title,
 					link: url,
-					collection: { id: collectionId },
+					collectionId,
 				}),
 			},
 		);
