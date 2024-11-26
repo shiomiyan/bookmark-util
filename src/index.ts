@@ -1,6 +1,7 @@
 interface InoreaderData {
 	items: {
 		title: string;
+		categories: string[];
 		canonical: {
 			href: string;
 		}[];
@@ -35,6 +36,9 @@ export default {
 			authorization: `Bearer ${env.RAINDROP_TEST_TOKEN}`,
 			"content-type": "application/json",
 		};
+
+		// TODO: 現状「まとめる」タグの付いたコンテンツしか取り込めない
+		// 「あとで読む」も同期するなど、将来的には汎用性を上げたい
 
 		// Fetch Raindrop collection for "まとめる"
 		const collection = (await fetch(
