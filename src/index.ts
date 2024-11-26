@@ -36,17 +36,26 @@ export default {
 			"content-type": "application/json",
 		};
 
-		const omnivoreApiResponse = await fetch(
+		// Fetch Raindrop collection for "まとめる"
+		const collection = (await fetch(
+			"https://api.raindrop.io/rest/v1/collection/50015228",
+			{
+				method: "GET",
+				headers,
+			},
+		)).json();
+
+		const createRaindropResponse = await fetch(
 			"https://api.raindrop.io/rest/v1/raindrop",
 			{
 				method: "POST",
 				headers,
-				body: JSON.stringify({ title, link: url }),
+				body: JSON.stringify({ title, link: url, collection }),
 			},
 		);
 
-		return new Response(JSON.stringify(await omnivoreApiResponse.json()), {
-			status: omnivoreApiResponse.status,
+		return new Response(JSON.stringify(await createRaindropResponse.json()), {
+			status: createRaindropResponse.status,
 			headers: {
 				"content-type": "application/json",
 			},
