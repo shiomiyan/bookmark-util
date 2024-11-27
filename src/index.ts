@@ -51,6 +51,7 @@ export default {
 					title,
 					link: url,
 					collectionId,
+					pleaseParse: {}
 				}),
 			},
 		);

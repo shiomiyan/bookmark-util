@@ -1,30 +1,23 @@
 // test/index.spec.ts
-import {
-	env,
-	createExecutionContext,
-	waitOnExecutionContext,
-	SELF,
-} from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { describe, it, expect } from "vitest";
-import worker from "../src/index";
+import body from "./inoreader-webhook-body.json";
 
 // For now, you'll need to do something like this to get a correctly-typed
 // `Request` to pass to `worker.fetch()`.
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe("Hello World worker", () => {
-	it("responds with Hello World! (unit style)", async () => {
-		const request = new IncomingRequest("http://example.com");
-		// Create an empty context to pass to `worker.fetch()`.
-		const ctx = createExecutionContext();
-		const response = await worker.fetch(request, env, ctx);
-		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
-		await waitOnExecutionContext(ctx);
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
-	});
-
-	it("responds with Hello World! (integration style)", async () => {
-		const response = await SELF.fetch("https://example.com");
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+	it("Raindropに記事が保存されることのテスト", async () => {
+		const request = new IncomingRequest("http://example.com", {
+			method: "POST",
+			headers: {
+				"x-inoreader-user-id": env.INOREADER_USER_ID,
+				"x-inoreader-rule-name": env.INOREADER_RULE_NAME,
+			},
+			body: JSON.stringify(body)
+		});
+		const response = await SELF.fetch(request, env);
+		expect((await response.json()).result).toBe(true);
 	});
 });
