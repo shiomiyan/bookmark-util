@@ -37,11 +37,12 @@ export default {
 			"content-type": "application/json",
 		};
 
-		// TODO: 現状「まとめる」タグの付いたコンテンツしか取り込めない
-		// 「あとで読む」も同期するなど、将来的には汎用性を上げたい
+		const isMatomeru = inoreader.items[0].categories.some((category) =>
+			category.endsWith("まとめる"),
+		);
 
 		// Raindrop collection ID for "まとめる"
-		const collectionId = 50015228;
+		const collectionId = isMatomeru ? 50015228 : -1;
 		const createRaindropResponse = await fetch(
 			"https://api.raindrop.io/rest/v1/raindrop",
 			{
@@ -51,7 +52,7 @@ export default {
 					title,
 					link: url,
 					collectionId,
-					pleaseParse: {}
+					pleaseParse: {},
 				}),
 			},
 		);
