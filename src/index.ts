@@ -71,6 +71,7 @@ export default {
 					`https://api.raindrop.io/rest/v1/raindrop/${raindropId}`,
 					{
 						method: "PUT",
+						headers,
 						body: JSON.stringify({ collection: { $id: matomeruCollectionId } }),
 					},
 				);
