@@ -8,11 +8,19 @@ interface InoreaderData {
 	}[];
 }
 
+interface RaindropSearchResult {
+	items: {
+		_id: number;
+	}[];
+}
+
 interface Env {
 	INOREADER_RULE_NAME: string;
 	INOREADER_USER_ID: string;
 	RAINDROP_TEST_TOKEN: string;
 }
+
+const matomeruCollectionId: readonly number = 50015228;
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -41,8 +49,45 @@ export default {
 			category.endsWith("まとめる"),
 		);
 
+		if (isMatomeru) {
+			// 未整理に同じURLが保存されていたら、コレクションを"まとめる"に移動する
+			const params = new URLSearchParams({
+				search: url,
+				sort: "-created",
+			});
+			const searchRaindropResponse = await fetch(
+				`https://api.raindrop.io/rest/v1/raindrops/-1?${params.toString()}`,
+				{
+					method: "GET",
+					headers,
+				},
+			);
+			const searchResult =
+				await searchRaindropResponse.json<RaindropSearchResult>();
+
+			if (searchResult.items.length > 0) {
+				const raindropId = searchResult.items[0]._id;
+				const updateRaindropResponse = await fetch(
+					`https://api.raindrop.io/rest/v1/raindrop/${raindropId}`,
+					{
+						method: "PUT",
+						body: JSON.stringify({ collectionId: matomeruCollectionId }),
+					},
+				);
+				return new Response(
+					JSON.stringify(await updateRaindropResponse.json()),
+					{
+						status: updateRaindropResponse.status,
+						headers: {
+							"content-type": "application/json",
+						},
+					},
+				);
+			}
+		}
+
 		// Raindrop collection ID for "まとめる"
-		const collectionId = isMatomeru ? 50015228 : -1;
+		const collectionId = isMatomeru ? matomeruCollectionId : -1;
 		const createRaindropResponse = await fetch(
 			"https://api.raindrop.io/rest/v1/raindrop",
 			{
