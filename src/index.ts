@@ -1,4 +1,7 @@
-interface InoreaderData {
+/**
+ * InoreaderのWebhookアクションで送信されるリクエスト
+ */
+interface InoreaderWebhookData {
 	items: {
 		title: string;
 		categories: string[];
@@ -8,27 +11,34 @@ interface InoreaderData {
 	}[];
 }
 
-interface RaindropSearchResult {
+/**
+ * Raindropの検索APIのレスポンス
+ * @see https://developer.raindrop.io/v1/raindrops/multiple#get-raindrops
+ */
+interface Ranidrops {
 	items: {
 		_id: number;
 	}[];
 }
 
-interface Env {
-	INOREADER_RULE_NAME: string;
-	INOREADER_USER_ID: string;
-	RAINDROP_TEST_TOKEN: string;
-}
-
-const matomeruCollectionId: number = 50015228;
+/**
+ * Raindropの保存先コレクションのID
+ */
+const raindropCollectionId: number = 50015228;
 
 export default {
+	/**
+	 * InoreaderからのWebhookリクエストを受け取り、Raindropに保存する
+	 * @param request - InoreaderからのWebhookリクエスト
+	 * @param env - 環境変数
+	 * @returns - レスポンス
+	 */
 	async fetch(request: Request, env: Env): Promise<Response> {
 		if (request.method !== "POST") {
 			return new Response("Method not allowed.", { status: 405 });
 		}
 
-		// Validate Inoreader user id and rule name
+		// InoreaderのWebhookから送信されるカスタムヘッダで、ユーザーIDとルール名を検証する
 		if (
 			request.headers.get("x-inoreader-user-id") !== env.INOREADER_USER_ID ||
 			request.headers.get("x-inoreader-rule-name") !== env.INOREADER_RULE_NAME
@@ -36,7 +46,7 @@ export default {
 			return new Response("Forbidden :(", { status: 403 });
 		}
 
-		const inoreader = await request.json<InoreaderData>();
+		const inoreader = await request.json<InoreaderWebhookData>();
 		const title = inoreader.items[0].title;
 		const url = inoreader.items[0].canonical[0].href;
 
@@ -45,50 +55,41 @@ export default {
 			"content-type": "application/json",
 		};
 
-		const isMatomeru = inoreader.items[0].categories.some((category) =>
-			category.endsWith("まとめる"),
+		// Raindropに同じURLが保存されていたら、コレクションを"まとめる"に移動する
+		const params = new URLSearchParams({
+			search: url,
+			sort: "-created",
+		});
+		const searchRaindropsResponse = await fetch(
+			`https://api.raindrop.io/rest/v1/raindrops/-1?${params}`,
+			{
+				method: "GET",
+				headers,
+			},
 		);
+		const raindrops = await searchRaindropsResponse.json<Ranidrops>();
+		const isAlreadySaved = raindrops.items.length > 0;
 
-		if (isMatomeru) {
-			// 未整理に同じURLが保存されていたら、コレクションを"まとめる"に移動する
-			const params = new URLSearchParams({
-				search: url,
-				sort: "-created",
-			});
-			const searchRaindropResponse = await fetch(
-				`https://api.raindrop.io/rest/v1/raindrops/-1?${params.toString()}`,
+		// 同じURLが保存されていたら、コレクションを更新すればいい
+		if (isAlreadySaved) {
+			const raindropId = raindrops.items[0]._id;
+			const updateRaindropResponse = await fetch(
+				`https://api.raindrop.io/rest/v1/raindrop/${raindropId}`,
 				{
-					method: "GET",
+					method: "PUT",
 					headers,
+					body: JSON.stringify({ collection: { $id: raindropCollectionId } }),
 				},
 			);
-			const searchResult =
-				await searchRaindropResponse.json<RaindropSearchResult>();
 
-			if (searchResult.items.length > 0) {
-				const raindropId = searchResult.items[0]._id;
-				const updateRaindropResponse = await fetch(
-					`https://api.raindrop.io/rest/v1/raindrop/${raindropId}`,
-					{
-						method: "PUT",
-						headers,
-						body: JSON.stringify({ collection: { $id: matomeruCollectionId } }),
-					},
-				);
-				return new Response(
-					JSON.stringify(await updateRaindropResponse.json()),
-					{
-						status: updateRaindropResponse.status,
-						headers: {
-							"content-type": "application/json",
-						},
-					},
-				);
-			}
+			// Logging for Workers Logs
+			console.log(await updateRaindropResponse.json());
+
+			// 更新したRaindropのレスポンスを返す
+			return new Response(undefined, { status: 204 });
 		}
 
-		// Raindrop collection ID for "まとめる"
-		const collectionId = isMatomeru ? matomeruCollectionId : -1;
+		// まだRaindropに保存されていなかったら、新しく保存する
 		const createRaindropResponse = await fetch(
 			"https://api.raindrop.io/rest/v1/raindrop",
 			{
@@ -97,17 +98,15 @@ export default {
 				body: JSON.stringify({
 					title,
 					link: url,
-					collectionId,
+					collectionId: raindropCollectionId,
 					pleaseParse: {},
 				}),
 			},
 		);
 
-		return new Response(JSON.stringify(await createRaindropResponse.json()), {
-			status: createRaindropResponse.status,
-			headers: {
-				"content-type": "application/json",
-			},
-		});
+		// Logging for Workers Logs
+		console.log(await createRaindropResponse.json());
+
+		return new Response(undefined, { status: 204 });
 	},
 } satisfies ExportedHandler<Env>;

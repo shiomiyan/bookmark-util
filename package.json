@@ -4,21 +4,20 @@
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
+		"dev": "npm run wrangler:types && wrangler dev",
+		"start": "npm run wrangler:types && wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types",
+		"wrangler:types": "wrangler types ./src/worker-configuration.d.ts",
 		"format": "biome format --write ./"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
-		"@cloudflare/vitest-pool-workers": "^0.5.2",
-		"@cloudflare/workers-types": "^4.20241022.0",
-		"typescript": "^5.5.2",
+		"@cloudflare/vitest-pool-workers": "^0.8.15",
+		"typescript": "^5.8.3",
 		"vitest": "2.0.5",
-		"wrangler": "^3.60.3"
+		"wrangler": "^4.10.0"
 	},
 	"dependencies": {
-		"uuid": "^11.0.2"
+		"uuid": "^11.1.0"
 	}
 }
