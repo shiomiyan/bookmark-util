@@ -1,6 +1,6 @@
 ## omnivore-workers
 
-Sync Saved articles in Inoreader to ~~Omnivore~~Raindrop with Cloudflare Workers.
+Sync Tagged articles in Inoreader to Raindrop with Cloudflare Workers.
 
 ## Development
 
